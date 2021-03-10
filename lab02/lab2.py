@@ -10,7 +10,12 @@ def generate_sin(sr=44100, frequency=440, length=5):
 def main():
     y, sr = generate_sin(44100, 440, 5)
 
-    wavfile.write('./output/440hz.wav', sr, y)
+    wavfile.write('./output/440hz_mono.wav', sr, y)
+
+    # To write multiple-channels, use a 2-D array of shape (Nsamples, Nchannels).
+    # Stworzenie sygnału stereo
+    y_stereo = np.column_stack((y, y))
+    wavfile.write('./output/440hz_stereo.wav', sr, y_stereo)
 
 if __name__ == "__main__":
     main()
