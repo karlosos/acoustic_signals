@@ -5,6 +5,7 @@ from scipy.signal import correlate
 from funcy import print_durations
 from numba import jit
 import pandas as pd
+import librosa
 
 
 def generate_sin(sr=44100, frequency=440, length=5):
@@ -154,7 +155,43 @@ def experiment_shifts():
     print(df)
     df.to_csv("shifts.csv")
 
+def individual_file():
+    y, sr = librosa.load('./data/lab_02-03-DK.wav', mono=False)
+
+    fig, axes = plt.subplots(1, 1)
+    axes.plot(y[0, :], label="left")
+    axes.plot(y[1, :], label="right")
+    plt.legend()
+    plt.show()
+
+    # Find shift (mine implementation)
+    g = crosscorrelation_mine(np.column_stack((y[0, :], y[1, :])))
+    recovered_shift = np.argmax(g)
+    print(
+        f"Recovered shift my implementation: {recovered_shift}, {recovered_shift/sr} seconds"
+    )
+    
+    # Find shift (scipy implementation)
+    recovered_shift = crosscorrelation_scipy(
+            y[0, :], y[1, :], sr
+    )
+    print(
+        f"Recovered shift scipy implementation: {recovered_shift}, {recovered_shift/sr} seconds"
+    )
+
+    # Angle
+    angle = find_angle(recovered_shift/sr)
+    print(f"Angle: {angle}")
+
+    # GCC PHAT
+    recovered_shift = gcc_phat(y[0, :], y[1, :])
+    print(f"Recovered shift gccphat: {recovered_shift}, {recovered_shift/sr} seconds")
+
+    # ILD
+    ild_val = ild(y[0, :], y[1, :])
+    print(f"ILD: {ild_val}")
 
 if __name__ == "__main__":
     # main()
-    experiment_shifts()
+    # experiment_shifts()
+    individual_file()
