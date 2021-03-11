@@ -47,8 +47,11 @@ def gcc_phat(y1, y2):
     return shift
 
 
-def ild():
-    pass
+def ild(y1, y2):
+    left_channel = np.average(np.fft.fft(y1) ** 2)
+    right_channel = np.average(np.fft.fft(y2) ** 2)
+    ild = 10 * np.log10(left_channel/right_channel)
+    return ild
 
 
 def find_angle(shift, speed=343, ear_distance=20):
@@ -81,22 +84,25 @@ def main():
     y_stereo_shifted = np.column_stack((y, y_shifted))
     wavfile.write("./output/440hz_stereo_shifted.wav", sr, y_stereo_shifted)
 
-    # # Find shift (mine implementation)
-    g = crosscorrelation_mine(y_stereo_shifted)
-    recovered_shift = np.argmax(g)
-    print(f"Recovered shift my implementation: {recovered_shift}, {recovered_shift/sr} seconds")
+    # # # Find shift (mine implementation)
+    # g = crosscorrelation_mine(y_stereo_shifted)
+    # recovered_shift = np.argmax(g)
+    # print(f"Recovered shift my implementation: {recovered_shift}, {recovered_shift/sr} seconds")
 
-    # # Find shift (scipy implementation)
-    recovered_shift = crosscorrelation_scipy(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1], sr)
-    print(f"Recovered shift scipy implementation: {recovered_shift}, {recovered_shift/sr} seconds")
+    # # # Find shift (scipy implementation)
+    # recovered_shift = crosscorrelation_scipy(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1], sr)
+    # print(f"Recovered shift scipy implementation: {recovered_shift}, {recovered_shift/sr} seconds")
 
-    # Angle
-    angle = find_angle(0.03)
-    print(f"Angle: {angle}")
+    # # Angle
+    # angle = find_angle(0.03)
+    # print(f"Angle: {angle}")
 
-    # GCC PHAT
-    recovered_shift = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
-    print(f"Recovered shift gccphat: {recovered_shift}, {recovered_shift/sr} seconds")
+    # # GCC PHAT
+    # recovered_shift = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
+    # print(f"Recovered shift gccphat: {recovered_shift}, {recovered_shift/sr} seconds")
+
+    # ILD
+    print(f"ILD: {ild(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])}")
 
 
 if __name__ == "__main__":
