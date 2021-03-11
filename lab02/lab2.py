@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
+from scipy.signal import correlate
 
 from funcy import print_durations
 from numba import jit
@@ -15,13 +16,22 @@ def generate_sin(sr=44100, frequency=440, length=5):
 
 @print_durations()
 @jit
-def autocorellation(y):
+def crosscorrelation_mine(y):
     length = y.shape[0]
     g = np.zeros(length)
     for k in range(length):
         for n in range(length - 1 - k):
-            g[k] += y[n, 0] * y[n-k, 1]
+            g[k] += y[n, 1] * y[n - k, 0]
     return g
+
+
+@print_durations()
+def crosscorrelation_scipy(y1, y2, sr):
+    length = y1.size
+    xcorr = correlate(y1, y2)
+    dt = np.arange(1-length, length)
+    shift = dt[xcorr.argmax()]
+    return shift 
 
 
 def gcc_phat():
@@ -32,6 +42,10 @@ def ild():
     pass
 
 
+def find_angle(shift, speed=343, ear_distance=20):
+    return np.arcsin((shift * speed)/ear_distance)
+
+
 def main():
     y, sr = generate_sin(44100, 440, 5)
 
@@ -40,6 +54,7 @@ def main():
     # Shift channel
     shift_seconds = 0.002
     shift = int(shift_seconds * sr)
+    print(f"Shift: {shift} samples, {shift_seconds} seconds")
     y_shifted = np.roll(y, shift=shift)
     # y_shifted[:shift] = np.nan
 
@@ -49,26 +64,28 @@ def main():
     axes.plot(y_shifted[:1000])
     plt.show()
 
-    # Stereo
+    # Create stereo
     y_stereo = np.column_stack((y, y))
     wavfile.write("./output/440hz_stereo.wav", sr, y_stereo)
 
-    # Stereo shifted
+    # Create shifted stereo
     y_stereo_shifted = np.column_stack((y, y_shifted))
     wavfile.write("./output/440hz_stereo_shifted.wav", sr, y_stereo_shifted)
 
-    # Crosscorellation 
-    g = autocorellation(y_stereo_shifted)
-    fig, axes = plt.subplots(1, 2)
-    axes[0].plot(g)
-    axes[1].plot(g[:1000])
-    plt.show()
-    
-    # Crosscorellation numpu
-    g = np.correlate(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1], "full")
-    plt.plot(g)
-    plt.show()
-    breakpoint()
+    # # Find shift (mine implementation)
+    # g = crosscorrelation_mine(y_stereo_shifted)
+    # recovered_shift = np.argmax(g)
+    # print(f"Recovered shift my implementation: {recovered_shift}, {recovered_shift/sr} seconds")
+
+    # # Find shift (scipy implementation)
+    # recovered_shift = crosscorrelation_scipy(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1], sr)
+    # print(f"Recovered shift scipy implementation: {recovered_shift}, {recovered_shift/sr} seconds")
+
+    # Angle
+    angle = find_angle(0.03)
+    print(f"Angle: {angle}")
+
+    # GCC PHAT
 
 
 if __name__ == "__main__":
