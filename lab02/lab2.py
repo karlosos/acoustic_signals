@@ -34,8 +34,17 @@ def crosscorrelation_scipy(y1, y2, sr):
     return shift 
 
 
-def gcc_phat():
-    pass
+def gcc_phat(y1, y2):
+    n = y1.size + y2.size
+
+    x_l = np.fft.rfft(y1)
+    x_r = np.fft.rfft(y2)
+    x_conj = np.conj(x_r)
+
+    g = np.fft.irfft((x_l * x_conj)/(np.abs(x_l * x_conj)))
+    dt = np.arange(-y1.size, y1.size)
+    shift = dt[g.argmax()]
+    return shift
 
 
 def ild():
@@ -73,19 +82,21 @@ def main():
     wavfile.write("./output/440hz_stereo_shifted.wav", sr, y_stereo_shifted)
 
     # # Find shift (mine implementation)
-    # g = crosscorrelation_mine(y_stereo_shifted)
-    # recovered_shift = np.argmax(g)
-    # print(f"Recovered shift my implementation: {recovered_shift}, {recovered_shift/sr} seconds")
+    g = crosscorrelation_mine(y_stereo_shifted)
+    recovered_shift = np.argmax(g)
+    print(f"Recovered shift my implementation: {recovered_shift}, {recovered_shift/sr} seconds")
 
     # # Find shift (scipy implementation)
-    # recovered_shift = crosscorrelation_scipy(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1], sr)
-    # print(f"Recovered shift scipy implementation: {recovered_shift}, {recovered_shift/sr} seconds")
+    recovered_shift = crosscorrelation_scipy(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1], sr)
+    print(f"Recovered shift scipy implementation: {recovered_shift}, {recovered_shift/sr} seconds")
 
     # Angle
     angle = find_angle(0.03)
     print(f"Angle: {angle}")
 
     # GCC PHAT
+    recovered_shift = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
+    print(f"Recovered shift gccphat: {recovered_shift}, {recovered_shift/sr} seconds")
 
 
 if __name__ == "__main__":
