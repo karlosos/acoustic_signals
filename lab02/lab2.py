@@ -113,7 +113,7 @@ def main():
 
 
 def experiment_shifts():
-    y, sr = generate_sin(44100, 3000, 25)
+    y, sr = generate_sin(44100, 440, 25)
     data = {
         "shift": [],
         "recovered_shift_xcorr": [],
@@ -154,9 +154,13 @@ def experiment_shifts():
     df = pd.DataFrame(data)
     print(df)
     df.to_csv("shifts.csv")
+    print(df.to_latex())
 
 def individual_file():
     y, sr = librosa.load('./data/lab_02-03-DK.wav', mono=False)
+
+    print("SR:", sr)
+    print("Length:", y.shape[1]/sr)
 
     fig, axes = plt.subplots(1, 1)
     axes.plot(y[0, :], label="left")
