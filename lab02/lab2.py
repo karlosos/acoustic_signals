@@ -32,7 +32,7 @@ def crosscorrelation_scipy(y1, y2, sr):
     xcorr = correlate(y1, y2)
     dt = np.arange(1 - length, length)
     shift = dt[xcorr.argmax()]
-    return shift
+    return shift, xcorr
 
 
 def gcc_phat(y1, y2):
@@ -45,7 +45,8 @@ def gcc_phat(y1, y2):
     g = np.fft.irfft((x_l * x_conj) / (np.abs(x_l * x_conj)))
     dt = np.arange(-y1.size, y1.size)
     shift = dt[g.argmax()]
-    return shift
+    breakpoint()
+    return shift, g
 
 
 def ild(y1, y2):
@@ -105,7 +106,7 @@ def main():
     print(f"Angle: {angle}")
 
     # GCC PHAT
-    recovered_shift = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
+    recovered_shift, _ = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
     print(f"Recovered shift gccphat: {recovered_shift}, {recovered_shift/sr} seconds")
 
     # ILD
@@ -135,14 +136,19 @@ def experiment_shifts():
         plt.show()
 
         y_stereo_shifted = np.column_stack((y, y_shifted))
+        wavfile.write(f"./output/440hz_stereo_shifted_{shift}.wav", sr, y_stereo_shifted)
 
         # g = crosscorrelation_mine(y_stereo_shifted)
         # recovered_shift_xcorr_mine = np.argmax(g)
-        recovered_shift_xcorr_scipy = crosscorrelation_scipy(
+        recovered_shift_xcorr_scipy, g = crosscorrelation_scipy(
             y_stereo_shifted[:, 0], y_stereo_shifted[:, 1], sr
         )
+        plt.plot(g)
+        plt.show()
         angle = find_angle(shift_seconds)
-        recovered_shift_gcc = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
+        recovered_shift_gcc, g = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
+        plt.plot(g)
+        plt.show()
         ild_val = ild(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
         data["shift"].append(shift)
         data["recovered_shift_xcorr"].append(recovered_shift_xcorr_scipy)
@@ -197,5 +203,5 @@ def individual_file():
 
 if __name__ == "__main__":
     # main()
-    # experiment_shifts()
-    individual_file()
+    experiment_shifts()
+    # individual_file()
