@@ -38,14 +38,13 @@ def crosscorrelation_scipy(y1, y2, sr):
 def gcc_phat(y1, y2):
     n = y1.size + y2.size
 
-    x_l = np.fft.rfft(y1)
-    x_r = np.fft.rfft(y2)
+    x_l = np.fft.rfft(y1, n=n)
+    x_r = np.fft.rfft(y2, n=n)
     x_conj = np.conj(x_r)
 
     g = np.fft.irfft((x_l * x_conj) / (np.abs(x_l * x_conj)))
     dt = np.arange(-y1.size, y1.size)
-    shift = dt[g.argmax()]
-    breakpoint()
+    shift = dt[g[:-100].argmax()]
     return shift, g
 
 
@@ -56,12 +55,16 @@ def ild(y1, y2):
     return ild
 
 
+def ild_calc(y1, y2):
+    return 10 * np.log10(np.sum(y1 ** 2) / np.sum(y2 ** 2))
+
+
 def find_angle(shift, speed=343, ear_distance=20):
     return np.arcsin((shift * speed) / ear_distance)
 
 
 def main():
-    y, sr = generate_sin(44100, 440, 5)
+    y, sr = generate_sin(44100, 440, 25)
 
     wavfile.write("./output/440hz_mono.wav", sr, y)
 
@@ -114,7 +117,7 @@ def main():
 
 
 def experiment_shifts():
-    y, sr = generate_sin(44100, 440, 25)
+    y, sr = generate_sin(44100, 440, 2)
     data = {
         "shift": [],
         "recovered_shift_xcorr": [],
@@ -129,27 +132,45 @@ def experiment_shifts():
         y_shifted = np.roll(y, shift=shift)
 
         # Plot signals with shift
-        fig, axes = plt.subplots(1, 1)
-        axes.plot(y[:1000], label="left")
-        axes.plot(y_shifted[:1000], label="right")
-        plt.legend()
-        plt.show()
+        fig, axes = plt.subplots(1, 3, figsize=(12, 3))
+        axes[0].plot(y[:120], label="left")
+        axes[0].set_yticklabels([])
+        axes[0].plot(y_shifted[:120], label="right")
 
         y_stereo_shifted = np.column_stack((y, y_shifted))
-        wavfile.write(f"./output/440hz_stereo_shifted_{shift}.wav", sr, y_stereo_shifted)
+        wavfile.write(
+            f"./output/440hz_stereo_shifted_{shift}.wav", sr, y_stereo_shifted
+        )
 
         # g = crosscorrelation_mine(y_stereo_shifted)
         # recovered_shift_xcorr_mine = np.argmax(g)
         recovered_shift_xcorr_scipy, g = crosscorrelation_scipy(
             y_stereo_shifted[:, 0], y_stereo_shifted[:, 1], sr
         )
-        plt.plot(g)
-        plt.show()
+        dt = np.arange(1 - y.shape[0], y.shape[0])
+        axes[1].plot(dt, g)
+        axes[1].set_yticklabels([])
+        axes[1].axvline(x=recovered_shift_xcorr_scipy, linestyle='--', color='c')
+        axes[1].set_xlim(-90, 40)
+
         angle = find_angle(shift_seconds)
-        recovered_shift_gcc, g = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
-        plt.plot(g)
-        plt.show()
-        ild_val = ild(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
+        # recovered_shift_gcc, g = gcc_phat(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
+        recovered_shift_gcc, g = gcc_phat(
+            y_stereo_shifted[:, 0], y_stereo_shifted[:, 1]
+        )
+        dt = np.arange(-y_stereo_shifted.shape[0], y_stereo_shifted.shape[0])
+        axes[2].plot(dt, g)
+        axes[2].set_yticklabels([])
+        axes[2].axvline(x=recovered_shift_gcc, linestyle='--', color='c')
+
+        axes[2].set_xlim(-90, 40)
+
+        fig.tight_layout()
+        # plt.show()
+        plt.savefig(f"shift_{shift}.eps")
+
+
+        ild_val = ild_calc(y_stereo_shifted[:, 0], y_stereo_shifted[:, 1])
         data["shift"].append(shift)
         data["recovered_shift_xcorr"].append(recovered_shift_xcorr_scipy)
         # data["recovered_shift_xcorr_2"].append(recovered_shift_xcorr_mine)
@@ -162,11 +183,12 @@ def experiment_shifts():
     df.to_csv("shifts.csv")
     print(df.to_latex())
 
+
 def individual_file():
-    y, sr = librosa.load('./data/lab_02-03-DK.wav', mono=False)
+    y, sr = librosa.load("./data/lab_02-03-DK.wav", mono=False)
 
     print("SR:", sr)
-    print("Length:", y.shape[1]/sr)
+    print("Length:", y.shape[1] / sr)
 
     fig, axes = plt.subplots(1, 1)
     axes.plot(y[0, :], label="left")
@@ -180,17 +202,15 @@ def individual_file():
     print(
         f"Recovered shift my implementation: {recovered_shift}, {recovered_shift/sr} seconds"
     )
-    
+
     # Find shift (scipy implementation)
-    recovered_shift = crosscorrelation_scipy(
-            y[0, :], y[1, :], sr
-    )
+    recovered_shift = crosscorrelation_scipy(y[0, :], y[1, :], sr)
     print(
         f"Recovered shift scipy implementation: {recovered_shift}, {recovered_shift/sr} seconds"
     )
 
     # Angle
-    angle = find_angle(recovered_shift/sr)
+    angle = find_angle(recovered_shift / sr)
     print(f"Angle: {angle}")
 
     # GCC PHAT
@@ -200,6 +220,7 @@ def individual_file():
     # ILD
     ild_val = ild(y[0, :], y[1, :])
     print(f"ILD: {ild_val}")
+
 
 if __name__ == "__main__":
     # main()
