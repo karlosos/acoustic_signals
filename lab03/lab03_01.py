@@ -4,17 +4,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 import librosa
 import librosa.display
+from scipy.io import wavfile
 
 
 def main():
-    b = get_filter()
+    b = get_filter().astype('float32')
     y, sr = librosa.load("./data/dziendobry.wav", mono=True)
+    y = y.astype('float32')
 
     fig, axes = plt.subplots(2, 1)
     axes[0].plot(fft.fft(y))
     axes[0].set_title('Widmo przed filtracją')
 
-    filtered_y = signal.convolve(y.astype('float32'), b.astype('float32'))
+    # TODO: convolve samemu napisać
+    # filtered_y = signal.convolve(y.astype('float32'), b.astype('float32'))
+    filtered_y = convolve(y, b)
+    wavfile.write("./data/filtered.wav", sr, filtered_y)
     axes[1].plot(fft.fft(filtered_y))
     axes[1].set_title('Widmo po filtracji')
     plt.tight_layout()
@@ -27,6 +32,17 @@ def main():
     spectogram(filtered_y)
     plt.title("Spektogram po filtracji")
     plt.show()
+
+
+def convolve(x, filter):
+    y = np.zeros_like(x)
+    for n in range(len(x)):
+        sum = 0
+        for k in range(len(filter)):
+            sum += filter[k] * x[n - k]
+        y[n] = sum
+
+    return y
 
 
 def spectogram(y):
