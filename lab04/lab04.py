@@ -27,21 +27,21 @@ def main():
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.windows.hamming.html#scipy.signal.windows.hamming
     window = signal.windows.hamming(n)
 
-    # Wykres okna hamminga
+    # wykres okna hamminga
     plt.plot(window)
-    plt.title("Okno haminga")
-    plt.ylabel("Amplituda")
-    plt.xlabel("Próbka")
+    plt.title("okno haminga")
+    plt.ylabel("amplituda")
+    plt.xlabel("próbka")
     plt.show()
-    # Wykres odpowiedzi czestotliwosciowej okna hamminga
-    A = fft(window, 2048) / (len(window) / 2.0)
-    freq = np.linspace(-0.5, 0.5, len(A))
-    response = 20 * np.log10(np.abs(fftshift(A / abs(A).max())))
+    # wykres odpowiedzi czestotliwosciowej okna hamminga
+    a = fft(window, 2048) / (len(window) / 2.0)
+    freq = np.linspace(-0.5, 0.5, len(a))
+    response = 20 * np.log10(np.abs(fftshift(a / abs(a).max())))
     plt.plot(freq, response)
     plt.axis([-0.5, 0.5, -120, 0])
-    plt.title("Odpowiedź częstotliwościowa okna haminga")
-    plt.ylabel("[dB]")
-    plt.xlabel("Znormalizowana częstotliwość")
+    plt.title("odpowiedź częstotliwościowa okna haminga")
+    plt.ylabel("[db]")
+    plt.xlabel("znormalizowana częstotliwość")
     plt.show()
 
     # Tworzenie filtra
