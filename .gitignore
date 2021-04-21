@@ -137,3 +137,22 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 .idea
+lab06/data/IRs/01_Lexicon_480L/01--Auto_Park.wav
+lab06/data/IRs/01_Lexicon_480L/02--BackSlap.wav
+lab06/data/IRs/01_Lexicon_480L/05--In_The_Past.wav
+lab06/data/IRs/01_Lexicon_480L/07--Large_Church.wav
+lab06/data/IRs/01_Lexicon_480L/08--Large_Hall.wav
+lab06/data/IRs/01_Lexicon_480L/09--Large_Room.wav
+lab06/data/IRs/01_Lexicon_480L/10--Medium_Hall.wav
+lab06/data/IRs/01_Lexicon_480L/11--Metallica.wav
+lab06/data/IRs/01_Lexicon_480L/12--Music_Club.wav
+lab06/data/IRs/01_Lexicon_480L/13--Small_Church.wav
+lab06/data/IRs/02_IR_York/01--1st_baptist_nashville_balcony.wav
+lab06/data/IRs/02_IR_York/02--arthur-sykes-rymer-auditorium-university-york.wav
+lab06/data/IRs/02_IR_York/04--elveden-hall-suffolk-england.wav
+lab06/data/poglos_01_01.wav
+lab06/data/poglos_01_02.wav
+lab06/data/poglos_01_03.wav
+lab06/data/poglos_02_01.wav
+lab06/data/poglos_02_02.wav
+lab06/data/poglos_02_03.wav
